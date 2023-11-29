@@ -1,42 +1,45 @@
-class Parser:
-    def __init__(self, input):
-        self.input = input
-        self.position = 0
+grammar = {
+    "E": [["E", "+", "T"], ["T"]],
+    "T": [["T", "*", "F"], ["F"]],
+    "F": [["(", "E", ")"], ["id"]],
+}
 
-    def consume(self, expected):
-        if self.position < len(self.input) and self.input[self.position] == expected:
-            self.position += 1
+parsing_table = {
+    ("E", "id"): ["T"],
+    ("E", "("): ["T"],
+    ("T", "id"): ["F"],
+    ("T", "("): ["F"],
+    ("F", "id"): ["id"],
+    ("F", "("): ["(", "E", ")"],
+    ("E", "+"): ["+", "T"],
+    ("T", "*"): ["*", "F"],
+}
+
+def parse(input_string):
+    stack = ["$", "E"]
+    input_string = input_string + "$"
+    cursor = 0
+
+    while len(stack) > 0:
+        print("Stack:", stack)
+        top = stack[-1]
+        current_input = input_string[cursor]
+
+        if top in grammar:
+            production = parsing_table.get((top, current_input), None)
+            if production is None:
+                return False
+            else:
+                stack.pop()
+                if production != ["epsilon"]:
+                    stack.extend(production[::-1])
+        elif top == current_input:
+            stack.pop()
+            cursor += 1
         else:
-            raise Exception(f"Expected '{expected}' but got '{self.input[self.position]}'")
+            return False
+    return True
 
-    def parse_E(self):
-        self.parse_T()
-        while self.position < len(self.input) and self.input[self.position] == '+':
-            self.consume('+')
-            self.parse_T()
-
-    def parse_T(self):
-        self.parse_F()
-        while self.position < len(self.input) and self.input[self.position] == '*':
-            self.consume('*')
-            self.parse_F()
-
-    def parse_F(self):
-        if self.position < len(self.input) and self.input[self.position] == '(':
-            self.consume('(')
-            self.parse_E()
-            self.consume(')')
-        elif self.position < len(self.input) and self.input[self.position].isalpha():
-            self.consume(self.input[self.position])
-        else:
-            raise Exception(f"Unexpected character '{self.input[self.position]}'")
-
-    def parse(self):
-        self.parse_E()
-        if self.position < len(self.input):
-            raise Exception(f"Unexpected end of input")
-
-# Test the parser
-p = Parser("id+id*id")
-p.parse()
-print("Parsing succeeded")
+print(parse("(id+id)*id"))
+print(parse("id*id"))
+print(parse("(id*)"))
