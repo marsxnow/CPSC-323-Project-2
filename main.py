@@ -69,7 +69,7 @@ def begin_parse(input):
     data = [
         ["0", format_stack(stack), "".join(input), ""]
     ]
-    while(step != 20):
+    while True:
         # Grab the input variable we need
         next_value = input.pop(0)
         # Check if it exists in the parsing table and return its move
